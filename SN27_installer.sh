@@ -238,8 +238,8 @@ if [[ "$OS" == "Linux" ]]; then
         abort "This Linux-based install requires apt. For other distros, install requirements manually."
     fi
 
-    # ASCII Banner
-    echo "
+    echo """
+    
  ░▒▓███████▓▒░ ░▒▓███████▓▒░        ░▒▓███████▓▒░  ░▒▓████████▓▒░ 
 ░▒▓█▓▒░        ░▒▓█▓▒░░▒▓█▓▒░              ░▒▓█▓▒░ ░▒▓█▓▒░░▒▓█▓▒░ 
 ░▒▓█▓▒░        ░▒▓█▓▒░░▒▓█▓▒░              ░▒▓█▓▒░        ░▒▓█▓▒░ 
@@ -247,21 +247,20 @@ if [[ "$OS" == "Linux" ]]; then
        ░▒▓█▓▒░ ░▒▓█▓▒░░▒▓█▓▒░       ░▒▓█▓▒░              ░▒▓█▓▒░  
        ░▒▓█▓▒░ ░▒▓█▓▒░░▒▓█▓▒░       ░▒▓█▓▒░             ░▒▓█▓▒░   
 ░▒▓███████▓▒░  ░▒▓█▓▒░░▒▓█▓▒░       ░▒▓████████▓▒░      ░▒▓█▓▒░   
-
+                                                                                                                                                             
                                                    - Bittensor; Mining a new element.
-"
-
+    """
     ohai "Starting auto-install..."
     linux_install_pre
 
-    # Paso 1: Instalar python, pip
+    # Step 1: Install python, pip
     linux_install_python
     linux_update_pip
 
-    # Paso 2: Crear y configurar venv en /home/ubuntu/venv
+    # Step 2: Create and configure venv in /home/ubuntu/venv
     linux_setup_venv
 
-    # Paso 3: Instalar Compute-Subnet y Bittensor dentro del venv
+    # Step 3: Install Compute-Subnet and Bittensor inside the venv
     linux_install_compute_subnet
 
     # PM2 (NodeJS)
@@ -270,7 +269,7 @@ if [[ "$OS" == "Linux" ]]; then
     # NVIDIA docker
     linux_install_nvidia_docker
 
-    # CUDA (sin remover drivers existentes)
+    # CUDA (without removing existing drivers)
     linux_install_nvidia_cuda
 
     # UFW
@@ -281,12 +280,24 @@ if [[ "$OS" == "Linux" ]]; then
 
     echo ""
     echo ""
-    echo "######################################################################"
-    echo "##                                                                  ##"
-    echo "##                      BITTENSOR SN27 SETUP                        ##"
-    echo "##                                                                  ##"
-    echo "######################################################################"
     echo ""
+    echo ""
+    echo """
+    
+██████╗░██╗████████╗████████╗███████╗███╗░░██╗░██████╗░█████╗░██████╗░
+██╔══██╗██║╚══██╔══╝╚══██╔══╝██╔════╝████╗░██║██╔════╝██╔══██╗██╔══██╗
+██████╦╝██║░░░██║░░░░░░██║░░░█████╗░░██╔██╗██║╚█████╗░██║░░██║██████╔╝
+██╔══██╗██║░░░██║░░░░░░██║░░░██╔══╝░░██║╚████║░╚═══██╗██║░░██║██╔══██╗
+██████╦╝██║░░░██║░░░░░░██║░░░███████╗██║░╚███║██████╔╝╚█████╔╝██║░░██║
+╚═════╝░╚═╝░░░╚═╝░░░░░░╚═╝░░░╚══════╝╚═╝░░╚══╝╚═════╝░░╚════╝░╚═╝░░╚═╝
+                                                    
+                                                    - Mining a new element.
+    """
+    echo "######################################################################"
+    echo "##                                                                  ##"
+    echo "##                      BITTENSOR SETUP                             ##"
+    echo "##                                                                  ##"
+    echo "######################################################################"
 
 elif [[ "$OS" == "Darwin" ]]; then
     abort "macOS installation is not implemented in this auto script."
