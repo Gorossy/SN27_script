@@ -49,52 +49,65 @@ linux_install_pre() {
 }
 
 ################################################################################
-# SUBTENSOR
+# COMPUTE-SUBNET
 ################################################################################
-linux_install_subtensor() {
-    ohai "Cloning subtensor into ~/subtensor"
-    mkdir -p ~/subtensor
-    sudo apt install -y git
-    git clone https://github.com/opentensor/subtensor.git
-    cd subtensor
+linux_install_compute_subnet() {
+    ohai "Cloning or updating Compute-Subnet into ~/Compute-Subnet"
+    mkdir -p ~/Compute-Subnet
+    if [ ! -d ~/Compute-Subnet/.git ]; then
+      # Si no está clonado, clonamos
+      git clone https://github.com/neuralinternet/Compute-Subnet.git ~/Compute-Subnet/
+    else
+      # Si ya está, hacemos pull
+      cd ~/Compute-Subnet
+      git pull --ff-only
+      cd ~
+    fi
+
+    ohai "Installing Compute-Subnet dependencies (including correct Bittensor version)"
+    cd ~/Compute-Subnet
+    # Asumimos que 'requirements.txt' y/o 'requirements-compute.txt' incluyen la versión requerida de Bittensor
+    "$python" -m pip install -r requirements.txt
+    "$python" -m pip install --no-deps -r requirements-compute.txt
+    # Instalación editable de Compute-Subnet
+    "$python" -m pip install -e .
+    exit_on_error $? "compute-subnet-installation"
+
+    # Instalar librerías extra para OpenCL
+    sudo apt -y install ocl-icd-libopencl1 pocl-opencl-icd
+
+    ohai "Starting Docker service, adding user to docker, installing 'at' package"
+    sudo groupadd docker 2>/dev/null || true
+    sudo usermod -aG docker "$USER"
+    sudo systemctl start docker
+    sudo apt install -y at
+
+    cd ~
 }
 
 ################################################################################
 # PYTHON
 ################################################################################
 linux_install_python() {
-    if ! which "$python" >/dev/null 2>&1; then
+    if ! command -v "$python" >/dev/null 2>&1; then
         ohai "Installing python"
         sudo apt-get install --no-install-recommends --no-install-suggests -y "$python"
     else
         ohai "Upgrading python"
         sudo apt-get install --only-upgrade "$python"
     fi
-    exit_on_error $?
+    exit_on_error $? "python-install"
 
     ohai "Installing python dev tools"
     sudo apt-get install --no-install-recommends --no-install-suggests -y \
       "${python}-pip" "${python}-dev"
-    exit_on_error $?
+    exit_on_error $? "python-dev"
 }
 
 linux_update_pip() {
     ohai "Upgrading pip"
     "$python" -m pip install --upgrade pip
-}
-
-################################################################################
-# BITTENSOR
-################################################################################
-linux_install_bittensor() {
-    ohai "Cloning bittensor@master into ~/.bittensor/bittensor"
-    mkdir -p ~/.bittensor/bittensor
-    git clone https://github.com/opentensor/bittensor.git \
-      ~/.bittensor/bittensor/ 2>/dev/null || \
-      ( cd ~/.bittensor/bittensor/ && git fetch origin master && git checkout master && git pull --ff-only && git reset --hard && git clean -xdf )
-    ohai "Installing bittensor"
-    "$python" -m pip install -e ~/.bittensor/bittensor/
-    exit_on_error $?
+    exit_on_error $? "pip-upgrade"
 }
 
 ################################################################################
@@ -124,91 +137,29 @@ linux_install_nvidia_docker() {
 }
 
 ################################################################################
-# COMPUTE-SUBNET
-################################################################################
-linux_install_compute_subnet() {
-    ohai "Cloning Compute-Subnet into ~/Compute-Subnet"
-    mkdir -p ~/Compute-Subnet
-    git clone https://github.com/neuralinternet/Compute-Subnet.git ~/Compute-Subnet/ 2>/dev/null || \
-      ( cd ~/Compute-Subnet/ && git pull --ff-only && git reset --hard && git clean -xdf )
-
-    ohai "Installing Compute-Subnet dependencies"
-    cd ~/Compute-Subnet
-    "$python" -m pip install -r requirements.txt
-    "$python" -m pip install --no-deps -r requirements-compute.txt
-    "$python" -m pip install -e .
-    sudo apt -y install ocl-icd-libopencl1 pocl-opencl-icd
-
-    ohai "Starting Docker service, adding user to docker, installing 'at' package"
-    sudo groupadd docker 2>/dev/null || true
-    sudo usermod -aG docker "$USER"
-    sudo systemctl start docker
-    sudo apt install -y at
-
-    cd ~
-    exit_on_error $?
-}
-
-################################################################################
-# HASHCAT
-################################################################################
-linux_install_hashcat() {
-    ohai "Installing Hashcat"
-    wget https://hashcat.net/files/hashcat-6.2.6.tar.gz
-    tar xzvf hashcat-6.2.6.tar.gz
-    cd hashcat-6.2.6/
-    sudo make
-    sudo make install
-    export PATH=$PATH:/usr/local/bin/
-    echo "export PATH=$PATH" >>~/.bashrc
-    cd ~
-}
-
-################################################################################
-# NVIDIA CUDA
+# CUDA INSTALLATION (NO removal of existing drivers)
 ################################################################################
 linux_install_nvidia_cuda() {
-    ohai "Removing old NVIDIA drivers (if any)"
-    if command -v apt-get >/dev/null 2>&1; then
-        sudo apt-get remove --purge -y '^nvidia.*'
-        sudo apt-get autoremove -y
-        sudo dpkg --configure -a
-        sudo apt-get install -f -y
-    elif command -v dnf >/dev/null 2>&1; then
-        sudo dnf remove -y nvidia* || true
+    ohai "Checking if CUDA is already installed"
+    # Revisamos si ya existe 'nvcc' o 'nvidia-smi'; si es así, asumimos que ya está configurado
+    if command -v nvidia-smi >/dev/null 2>&1 || command -v nvcc >/dev/null 2>&1; then
+        ohai "CUDA/NVIDIA drivers found; skipping re-installation."
+        return
     fi
+
+    ohai "CUDA/NVIDIA drivers not found. Proceeding with a fresh installation."
 
     ohai "Installing build essentials"
-    if command -v apt-get >/dev/null 2>&1; then
-        sudo apt-get install -y build-essential dkms linux-headers-$(uname -r)
-    elif command -v dnf >/dev/null 2>&1; then
-        sudo dnf group install -y "Development Tools"
-        sudo dnf install -y kernel-devel-$(uname -r) kernel-headers-$(uname -r)
-    fi
+    sudo apt-get install -y build-essential dkms linux-headers-$(uname -r)
 
     ohai "Installing CUDA"
-    if command -v apt-get >/dev/null 2>&1; then
-        # Debian/Ubuntu
-        wget https://developer.download.nvidia.com/compute/cuda/12.3.1/local_installers/cuda-repo-ubuntu2204-12-3-local_12.3.1-545.23.08-1_amd64.deb \
-          -O /tmp/cuda-repo.deb
-        sudo dpkg -i /tmp/cuda-repo.deb
-        sudo cp /var/cuda-repo-ubuntu2204-12-3-local/cuda-*-keyring.gpg /usr/share/keyrings/
-        sudo apt-get update
-        sudo apt-get -y install cuda-toolkit-12-3
-        sudo apt-get -y install cuda-drivers
-
-    elif command -v dnf >/dev/null 2>&1; then
-        # RHEL/Rocky
-        wget https://developer.download.nvidia.com/compute/cuda/12.3.1/local_installers/cuda-repo-rhel9-12-3-local-12.3.1-545.23.08-1.x86_64.rpm \
-          -O /tmp/cuda-repo.rpm
-        sudo rpm --install /tmp/cuda-repo.rpm
-        sudo dnf clean all
-        sudo dnf -y update
-        sudo dnf -y install cuda
-    else
-        ohai "Unsupported distribution for NVIDIA CUDA installation."
-        exit 1
-    fi
+    wget https://developer.download.nvidia.com/compute/cuda/12.3.1/local_installers/cuda-repo-ubuntu2204-12-3-local_12.3.1-545.23.08-1_amd64.deb \
+      -O /tmp/cuda-repo.deb
+    sudo dpkg -i /tmp/cuda-repo.deb
+    sudo cp /var/cuda-repo-ubuntu2204-12-3-local/cuda-*-keyring.gpg /usr/share/keyrings/
+    sudo apt-get update
+    sudo apt-get -y install cuda-toolkit-12-3
+    sudo apt-get -y install cuda-drivers
 
     ohai "Configuring environment variables"
     export CUDA_VERSION="cuda-12.3"
@@ -235,7 +186,6 @@ linux_install_ufw() {
     sudo ufw allow 22/tcp
     sudo ufw allow 4444
 
-    # By default, let's just open 2000-5000 (example)
     ohai "Enabling UFW and allowing ports 2000-5000"
     sudo ufw allow 2000:5000/tcp
     sudo ufw enable
@@ -255,9 +205,8 @@ linux_increase_ulimit(){
 OS="$(uname)"
 if [[ "$OS" == "Linux" ]]; then
 
-    # Check for apt
-    type apt >/dev/null 2>&1
-    if [[ $? -ne 0 ]]; then
+    # Verificamos si apt está disponible
+    if ! command -v apt >/dev/null 2>&1; then
         abort "This Linux-based install requires apt. For other distros, install requirements manually."
     fi
 
@@ -276,16 +225,27 @@ if [[ "$OS" == "Linux" ]]; then
 
     ohai "Starting auto-install..."
     linux_install_pre
-    linux_install_subtensor
+
+    # Primero instalamos Python y actualizamos pip (para requirements)
     linux_install_python
     linux_update_pip
-    linux_install_bittensor
-    linux_install_pm2
-    linux_install_nvidia_docker
+
+    # Hacemos pull/clone de Compute-Subnet e instalamos (incluye Bittensor versión requerida)
     linux_install_compute_subnet
-    linux_install_hashcat
+
+    # PM2 (NodeJS)
+    linux_install_pm2
+
+    # NVIDIA docker
+    linux_install_nvidia_docker
+
+    # CUDA (sin remover drivers existentes)
     linux_install_nvidia_cuda
+
+    # UFW
     linux_install_ufw
+
+    # ulimit
     linux_increase_ulimit
 
     echo ""
