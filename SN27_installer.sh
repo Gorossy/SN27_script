@@ -78,29 +78,29 @@ linux_install_compute_subnet() {
     sudo mkdir -p /home/ubuntu/Compute-Subnet
 
     if [ ! -d /home/ubuntu/Compute-Subnet/.git ]; then
-      # Si no está clonado, clonamos
+      # If not cloned, we clone it
       sudo git clone https://github.com/neuralinternet/Compute-Subnet.git /home/ubuntu/Compute-Subnet/
     else
-      # Si ya está, hacemos pull
+      # If already cloned, we pull
       cd /home/ubuntu/Compute-Subnet
       sudo git pull --ff-only
     fi
 
-    # Aseguramos que “ubuntu” sea el dueño de la carpeta
+    # Ensure that "ubuntu" is the owner of the folder
     sudo chown -R ubuntu:ubuntu /home/ubuntu/Compute-Subnet
 
     ohai "Installing Compute-Subnet dependencies (including correct Bittensor version)"
     cd /home/ubuntu/Compute-Subnet
 
-    # Instalar dentro del venv
+    # Install inside the venv
     sudo -u ubuntu -H /home/ubuntu/venv/bin/pip install -r requirements.txt
     sudo -u ubuntu -H /home/ubuntu/venv/bin/pip install --no-deps -r requirements-compute.txt
 
-    # Instalación editable de Compute-Subnet
+    # Editable installation of Compute-Subnet
     sudo -u ubuntu -H /home/ubuntu/venv/bin/pip install -e .
     exit_on_error $? "compute-subnet-installation"
 
-    # Instalar librerías extra para OpenCL
+    # Install extra libraries for OpenCL
     sudo apt -y install ocl-icd-libopencl1 pocl-opencl-icd
 
     ohai "Starting Docker service, adding user to docker, installing 'at' package"
@@ -168,7 +168,7 @@ linux_install_nvidia_docker() {
 ################################################################################
 linux_install_nvidia_cuda() {
     ohai "Checking if CUDA is already installed"
-    # Revisamos si ya existe 'nvcc' o 'nvidia-smi'; si es así, asumimos que ya está configurado
+    # Check if 'nvcc' or 'nvidia-smi' already exists; if so, assume it's already configured
     if command -v nvidia-smi >/dev/null 2>&1 || command -v nvcc >/dev/null 2>&1; then
         ohai "CUDA/NVIDIA drivers found; skipping re-installation."
         return
@@ -198,7 +198,7 @@ linux_install_nvidia_cuda() {
       echo "export LD_LIBRARY_PATH=\$LD_LIBRARY_PATH:/usr/local/\$CUDA_VERSION/lib64"
     } >> /home/ubuntu/.bashrc
 
-    # Ajustamos permisos y cargamos en la sesión actual
+    # Adjust permissions and load in the current session
     sudo chown ubuntu:ubuntu /home/ubuntu/.bashrc
     source /home/ubuntu/.bashrc
 
@@ -233,7 +233,7 @@ linux_increase_ulimit(){
 OS="$(uname)"
 if [[ "$OS" == "Linux" ]]; then
 
-    # Verificamos si apt está disponible
+    # Verify if apt is installed
     if ! command -v apt >/dev/null 2>&1; then
         abort "This Linux-based install requires apt. For other distros, install requirements manually."
     fi
