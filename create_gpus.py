@@ -87,6 +87,30 @@ def check_vm_status(vm_ids):
         print(f"Failed to check VM statuses: {e}")
         raise
 
+def open_ssh_port(vm_id):
+    """
+    Opens port 22 (SSH) on the specified VM through the security rule.
+    """
+    rule_payload = {
+        "remote_ip_prefix": "0.0.0.0/0",
+        "direction": "ingress",
+        "ethertype": "IPv4",
+        "protocol": "tcp",
+        "port_range_min": 22,
+        "port_range_max": 22
+    }
+
+    try:
+        response = requests.post(
+            f"{BASE_URL}core/virtual-machines/{vm_id}/sg-rules",
+            headers=HEADERS,
+            json=rule_payload
+        )
+        response.raise_for_status()
+        print(f"SSH port opened for VM {vm_id}")
+    except requests.exceptions.RequestException as e:
+        print(f"Failed to open SSH port on VM {vm_id}: {e}")
+
 def delete_virtual_machine(vm_id):
     print(f"Deleting virtual machine {vm_id}...")
     try:
@@ -126,7 +150,11 @@ def main():
             print("Waiting 30 seconds before rechecking...")
             time.sleep(interval)
 
-        print("Waiting 1h minutes before cleanup...")
+        print("Opening SSH port (22) on each VM...")
+        for vm_id in vm_ids:
+            open_ssh_port(vm_id)
+
+        print("Waiting 1 hour (approx) before cleanup...")
         time.sleep(3200)
 
     except KeyboardInterrupt:
