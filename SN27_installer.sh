@@ -256,8 +256,8 @@ OS="$(uname)"
 if [[ "$OS" == "Linux" ]]; then
 
     # Check for apt
-    which -s apt
-    if [[ $? != 0 ]]; then
+    type apt >/dev/null 2>&1
+    if [[ $? -ne 0 ]]; then
         abort "This Linux-based install requires apt. For other distros, install requirements manually."
     fi
 
