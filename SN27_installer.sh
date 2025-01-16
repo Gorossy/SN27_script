@@ -78,7 +78,7 @@ linux_install_compute_subnet() {
 
     ohai "Starting Docker service, adding user to docker, installing 'at' package"
     sudo groupadd docker 2>/dev/null || true
-    sudo usermod -aG docker "$USER"
+    sudo usermod -aG docker ubuntu
     sudo systemctl start docker
     sudo apt install -y at
 
