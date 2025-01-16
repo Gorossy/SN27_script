@@ -10,6 +10,10 @@ API_KEY = os.getenv("API_KEY")
 ENVIRONMENT_NAME = os.getenv("ENVIRONMENT_NAME")
 KEY_NAME = os.getenv("KEY_NAME")
 
+# Agregados:
+IMAGE_NAME = os.getenv("IMAGE_NAME")
+FLAVOR_NAME = os.getenv("FLAVOR_NAME")
+
 HEADERS = {
     "api_key": API_KEY,
     "Content-Type": "application/json"
@@ -33,8 +37,8 @@ runcmd:
     payload = {
         "name": "cloud-init-test",
         "environment_name": environment_name,
-        "image_name": "Ubuntu Server 22.04 LTS R535 CUDA 12.2",
-        "flavor_name": "n3-L40x1",
+        "image_name": IMAGE_NAME,
+        "flavor_name": FLAVOR_NAME,
         "key_name": key_name,
         "assign_floating_ip": True,
         "count": 1,
