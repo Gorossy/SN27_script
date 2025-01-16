@@ -56,16 +56,16 @@ linux_setup_venv() {
     sudo apt-get install -y python3.10-venv
 
     ohai "Creating Python venv in /home/ubuntu/venv"
-    # Creamos el venv como usuario ubuntu
+    # Create the venv as the ubuntu user
     sudo -u ubuntu -H python3 -m venv /home/ubuntu/venv
     exit_on_error $? "venv-creation"
 
-    # Actualizamos pip dentro del venv
+    # Upgrade pip inside the venv
     ohai "Upgrading pip in the new venv"
     sudo -u ubuntu -H /home/ubuntu/venv/bin/pip install --upgrade pip
     exit_on_error $? "venv-pip-upgrade"
 
-    # Opción: Activar automáticamente el venv en ~/.bashrc
+    # Option: Automatically activate the venv in ~/.bashrc
     echo "source /home/ubuntu/venv/bin/activate" | sudo tee -a /home/ubuntu/.bashrc
     sudo chown ubuntu:ubuntu /home/ubuntu/.bashrc
 }
