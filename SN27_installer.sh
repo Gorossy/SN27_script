@@ -49,12 +49,34 @@ linux_install_pre() {
 }
 
 ################################################################################
+# SETUP VENV
+################################################################################
+linux_setup_venv() {
+    ohai "Installing python3.10-venv (if not present)"
+    sudo apt-get install -y python3.10-venv
+
+    ohai "Creating Python venv in /home/ubuntu/venv"
+    # Creamos el venv como usuario ubuntu
+    sudo -u ubuntu -H python3 -m venv /home/ubuntu/venv
+    exit_on_error $? "venv-creation"
+
+    # Actualizamos pip dentro del venv
+    ohai "Upgrading pip in the new venv"
+    sudo -u ubuntu -H /home/ubuntu/venv/bin/pip install --upgrade pip
+    exit_on_error $? "venv-pip-upgrade"
+
+    # Opción: Activar automáticamente el venv en ~/.bashrc
+    echo "source /home/ubuntu/venv/bin/activate" | sudo tee -a /home/ubuntu/.bashrc
+    sudo chown ubuntu:ubuntu /home/ubuntu/.bashrc
+}
+
+################################################################################
 # COMPUTE-SUBNET
 ################################################################################
 linux_install_compute_subnet() {
     ohai "Cloning or updating Compute-Subnet into /home/ubuntu/Compute-Subnet"
     sudo mkdir -p /home/ubuntu/Compute-Subnet
-    
+
     if [ ! -d /home/ubuntu/Compute-Subnet/.git ]; then
       # Si no está clonado, clonamos
       sudo git clone https://github.com/neuralinternet/Compute-Subnet.git /home/ubuntu/Compute-Subnet/
@@ -69,11 +91,13 @@ linux_install_compute_subnet() {
 
     ohai "Installing Compute-Subnet dependencies (including correct Bittensor version)"
     cd /home/ubuntu/Compute-Subnet
-    sudo -u ubuntu -H $python -m pip install -r requirements.txt
-    sudo -u ubuntu -H $python -m pip install --no-deps -r requirements-compute.txt
+
+    # Instalar dentro del venv
+    sudo -u ubuntu -H /home/ubuntu/venv/bin/pip install -r requirements.txt
+    sudo -u ubuntu -H /home/ubuntu/venv/bin/pip install --no-deps -r requirements-compute.txt
 
     # Instalación editable de Compute-Subnet
-    sudo -u ubuntu -H $python -m pip install -e .
+    sudo -u ubuntu -H /home/ubuntu/venv/bin/pip install -e .
     exit_on_error $? "compute-subnet-installation"
 
     # Instalar librerías extra para OpenCL
@@ -108,7 +132,7 @@ linux_install_python() {
 }
 
 linux_update_pip() {
-    ohai "Upgrading pip"
+    ohai "Upgrading pip (system-wide)"
     "$python" -m pip install --upgrade pip
     exit_on_error $? "pip-upgrade"
 }
@@ -230,11 +254,14 @@ if [[ "$OS" == "Linux" ]]; then
     ohai "Starting auto-install..."
     linux_install_pre
 
-    # Primero instalamos Python y actualizamos pip (para requirements)
+    # Paso 1: Instalar python, pip
     linux_install_python
     linux_update_pip
 
-    # Hacemos pull/clone de Compute-Subnet e instalamos (incluye Bittensor versión requerida)
+    # Paso 2: Crear y configurar venv en /home/ubuntu/venv
+    linux_setup_venv
+
+    # Paso 3: Instalar Compute-Subnet y Bittensor dentro del venv
     linux_install_compute_subnet
 
     # PM2 (NodeJS)
