@@ -52,25 +52,28 @@ linux_install_pre() {
 # COMPUTE-SUBNET
 ################################################################################
 linux_install_compute_subnet() {
-    ohai "Cloning or updating Compute-Subnet into ~/Compute-Subnet"
-    mkdir -p ~/Compute-Subnet
-    if [ ! -d ~/Compute-Subnet/.git ]; then
+    ohai "Cloning or updating Compute-Subnet into /home/ubuntu/Compute-Subnet"
+    sudo mkdir -p /home/ubuntu/Compute-Subnet
+    
+    if [ ! -d /home/ubuntu/Compute-Subnet/.git ]; then
       # Si no está clonado, clonamos
-      git clone https://github.com/neuralinternet/Compute-Subnet.git ~/Compute-Subnet/
+      sudo git clone https://github.com/neuralinternet/Compute-Subnet.git /home/ubuntu/Compute-Subnet/
     else
       # Si ya está, hacemos pull
-      cd ~/Compute-Subnet
-      git pull --ff-only
-      cd ~
+      cd /home/ubuntu/Compute-Subnet
+      sudo git pull --ff-only
     fi
 
+    # Aseguramos que “ubuntu” sea el dueño de la carpeta
+    sudo chown -R ubuntu:ubuntu /home/ubuntu/Compute-Subnet
+
     ohai "Installing Compute-Subnet dependencies (including correct Bittensor version)"
-    cd ~/Compute-Subnet
-    # Asumimos que 'requirements.txt' y/o 'requirements-compute.txt' incluyen la versión requerida de Bittensor
-    "$python" -m pip install -r requirements.txt
-    "$python" -m pip install --no-deps -r requirements-compute.txt
+    cd /home/ubuntu/Compute-Subnet
+    sudo -u ubuntu -H $python -m pip install -r requirements.txt
+    sudo -u ubuntu -H $python -m pip install --no-deps -r requirements-compute.txt
+
     # Instalación editable de Compute-Subnet
-    "$python" -m pip install -e .
+    sudo -u ubuntu -H $python -m pip install -e .
     exit_on_error $? "compute-subnet-installation"
 
     # Instalar librerías extra para OpenCL
@@ -82,7 +85,7 @@ linux_install_compute_subnet() {
     sudo systemctl start docker
     sudo apt install -y at
 
-    cd ~
+    cd /home/ubuntu
 }
 
 ################################################################################
@@ -169,10 +172,11 @@ linux_install_nvidia_cuda() {
       echo "export CUDA_VERSION=${CUDA_VERSION}"
       echo "export PATH=\$PATH:/usr/local/\$CUDA_VERSION/bin"
       echo "export LD_LIBRARY_PATH=\$LD_LIBRARY_PATH:/usr/local/\$CUDA_VERSION/lib64"
-    } >>~/.bashrc
+    } >> /home/ubuntu/.bashrc
 
-    # Load them in the current session
-    source ~/.bashrc
+    # Ajustamos permisos y cargamos en la sesión actual
+    sudo chown ubuntu:ubuntu /home/ubuntu/.bashrc
+    source /home/ubuntu/.bashrc
 
     ohai "CUDA (Toolkit + Drivers) installation complete"
 }
@@ -258,7 +262,6 @@ if [[ "$OS" == "Linux" ]]; then
     echo ""
 
 elif [[ "$OS" == "Darwin" ]]; then
-    # ... existing Darwin code if needed ...
     abort "macOS installation is not implemented in this auto script."
 else
     abort "Bittensor is only supported on macOS and Linux"
@@ -272,5 +275,4 @@ echo "    sudo reboot"
 echo ""
 echo "After reboot, you can create a wallet pair and run your miner on SN27."
 echo "See docs: https://docs.neuralinternet.ai/products/subnet-27-compute/bittensor-compute-subnet-miner-setup"
-
 echo "Done."
