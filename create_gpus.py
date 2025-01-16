@@ -1,7 +1,6 @@
 import os
 import time
 import requests
-import json
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -25,7 +24,7 @@ packages:
 
 runcmd:
   - echo "Hello from Cloud-Init!"
-  - echo "Descargando y ejecutando el script SN27_installer.sh desde GitHub..."
+  - echo "Downloading and executing the SN27_installer.sh script from GitHub..."
   - curl -sL https://raw.githubusercontent.com/Gorossy/SN27_script/main/SN27_installer.sh -o /tmp/SN27_installer.sh
   - chmod +x /tmp/SN27_installer.sh
   - /tmp/SN27_installer.sh
@@ -34,7 +33,7 @@ runcmd:
     payload = {
         "name": "cloud-init-test",
         "environment_name": environment_name,
-        "image_name": "Ubuntu Server 22.04 LTS R535 CUDA 12.2",  # Example image
+        "image_name": "Ubuntu Server 22.04 LTS R535 CUDA 12.2",
         "flavor_name": "n3-L40x1",
         "key_name": key_name,
         "assign_floating_ip": True,
@@ -98,41 +97,46 @@ def delete_virtual_machine(vm_id):
         print(f"Failed to delete VM {vm_id}: {e}")
 
 def main():
-    vm_ids = create_virtual_machines(ENVIRONMENT_NAME, KEY_NAME)
+    vm_ids = []
 
-    if not vm_ids:
-        print("No VM was created. Exiting...")
-        return
+    try:
+        vm_ids = create_virtual_machines(ENVIRONMENT_NAME, KEY_NAME)
+        if not vm_ids:
+            print("No VM was created. Exiting...")
+            return
 
-    timeout = 600  # 10 minutes
-    interval = 30  # 30 seconds
-    start_time = time.time()
+        timeout = 600  # 10 minutes
+        interval = 30  # 30 seconds
+        start_time = time.time()
 
-    # Wait until all VMs are ACTIVE
-    while True:
-        vm_statuses = check_vm_status(vm_ids)
-        all_ready = all(
-            vm_statuses[vm_id]["status"] == "ACTIVE" for vm_id in vm_ids
-        )
-        if all_ready:
-            print("All VMs are ready.")
-            break
+        # Wait until all VMs are ACTIVE
+        while True:
+            vm_statuses = check_vm_status(vm_ids)
+            all_ready = all(
+                vm_statuses[vm_id]["status"] == "ACTIVE" for vm_id in vm_ids
+            )
+            if all_ready:
+                print("All VMs are ready.")
+                break
 
-        if time.time() - start_time > timeout:
-            print("Timeout reached while waiting for VMs to be ready.")
-            break
+            if time.time() - start_time > timeout:
+                print("Timeout reached while waiting for VMs to be ready.")
+                break
 
-        print("Waiting 30 seconds before rechecking...")
-        time.sleep(interval)
+            print("Waiting 30 seconds before rechecking...")
+            time.sleep(interval)
 
-    print("Waiting 1h minutes before cleanup...")
-    time.sleep(3200)
+        print("Waiting 1h minutes before cleanup...")
+        time.sleep(3200)
 
-    # Cleanup
-    for vm_id in vm_ids:
-        delete_virtual_machine(vm_id)
+    except KeyboardInterrupt:
+        print("\nKeyboard interrupt detected. Cleaning up any created VMs...")
 
-    print("Process completed.")
+    finally:
+        if vm_ids:
+            for vm_id in vm_ids:
+                delete_virtual_machine(vm_id)
+            print("Cleanup finished. Exiting.")
 
 if __name__ == "__main__":
     main()
