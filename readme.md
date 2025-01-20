@@ -1,77 +1,77 @@
-# Instalación Manual de Compute-Subnet
+# Manual Installation of Compute-Subnet
 
-## Descripción
-Este proyecto contiene un **script de instalación** que, al ejecutarse, se encarga de:
-* **Clonar** automáticamente el repositorio de Compute-Subnet.
-* **Instalar** Docker, NVIDIA drivers (si no detecta CUDA), PM2, Bittensor, y otras dependencias necesarias.
-* **Configurar** Python, entornos virtuales, y librerías de OpenCL.
+## Description
+This project contains an **installation script** that, when executed, takes care of:
+* **Cloning** the Compute-Subnet repository automatically.
+* **Installing** Docker, NVIDIA drivers (if CUDA is not detected), PM2, Bittensor, and other necessary dependencies.
+* **Configuring** Python, virtual environments, and OpenCL libraries.
 
-## Pasos para la Instalación
+## Installation Steps
 
-1. **Ejecuta el script de instalación**
-   * El script mostrará los componentes a instalar
-   * Solicitará confirmación para:
-     - Configuración de UFW (puertos)
-     - Incremento de `ulimit`
-   * Se instalarán automáticamente:
+1. **Run the installation script**
+   * The script will display the components to install
+   * It will request confirmation for:
+     - UFW configuration (ports)
+     - Increase of `ulimit`
+   * The following will be installed automatically:
      - Docker
-     - CUDA (si no está presente)
-     - Otras herramientas necesarias
+     - CUDA (if not present)
+     - Other necessary tools
 
-2. **Configuración de WANDB**
+2. **WANDB Configuration**
    ```bash
    cd Compute-Subnet
    cp .env.example .env
    ```
-   * Edita el archivo `.env` para configurar:
-     - WANDB_KEY (requerida para el funcionamiento)
+   * Edit the `.env` file to configure:
+     - WANDB_KEY (required for operation)
 
-3. **Creación de Wallet Bittensor**
+3. **Create Bittensor Wallet**
    ```bash
    btcli new_coldkey
    btcli new_hotkey
    ```
-   Este paso es necesario para la interacción con la red Bittensor.
+   This step is necessary for interaction with the Bittensor network.
 
-## Detalles de Instalación
-* El script clona `Compute-Subnet` automáticamente
-* UFW configurará los rangos de puertos especificados
-* Se instalarán todas las dependencias de Python necesarias
+## Installation Details
+* The script automatically clones `Compute-Subnet`
+* UFW will configure the specified port ranges
+* All necessary Python dependencies will be installed
 
-## Verificación Post-Instalación
+## Post-Installation Verification
 
-1. **Verifica Docker y CUDA:**
+1. **Verify Docker and CUDA:**
    ```bash
    docker --version
    nvidia-smi
    ```
 
-2. **Confirma las dependencias de Python:**
+2. **Confirm Python dependencies:**
    ```bash
    cd Compute-Subnet
    pip list
    ```
 
-3. **Revisa la configuración:**
-   * Archivo `.env` completo con WANDB_KEY
-   * Wallet de Bittensor creada y configurada
-   * Puertos UFW abiertos según especificaciones
+3. **Check the configuration:**
+   * Complete `.env` file with WANDB_KEY
+   * Bittensor wallet created and configured
+   * UFW ports open according to specifications
 
-## Resolución de Problemas
+## Troubleshooting
 
 ### Docker
-* Verifica que los repositorios se añadieron correctamente
-* Confirma que el servicio está activo: `systemctl status docker`
+* Verify that the repositories were added correctly
+* Confirm that the service is active: `systemctl status docker`
 
 ### NVIDIA Drivers
-* Asegura compatibilidad con tu distribución
-* Verifica logs en `/var/log/nvidia-installer.log`
+* Ensure compatibility with your distribution
+* Check logs in `/var/log/nvidia-installer.log`
 
 ### Bittensor
-* Confirma la existencia de las claves en `~/.bittensor/wallets/`
-* Verifica la conexión a la red: `btcli status`
+* Confirm the existence of the keys in `~/.bittensor/wallets/`
+* Verify the connection to the network: `btcli status`
 
-## Documentación Adicional
+## Additional Documentation
 * Bittensor: [bittensor.com/documentation](https://bittensor.com/documentation)
 * Compute-Subnet: [GitHub Repository](https://github.com/opentensor/compute-subnet)
 * WANDB: [wandb.ai/guides](https://wandb.ai/guides)
