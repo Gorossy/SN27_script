@@ -25,6 +25,18 @@ ohai() {
   echo "==> $*"
 }
 
+##############################################
+# 1. Detect if it is AUTOMATED or manual mode
+##############################################
+
+# AUTOMATED can be set as an environment variable, for example "true"
+AUTOMATED="${AUTOMATED:-false}"
+
+# Or parse a --automated flag
+if [[ "${1:-}" == "--automated" ]]; then
+  AUTOMATED="true"
+fi
+
 ################################################################################
 # PRE-INSTALL
 ################################################################################
@@ -205,26 +217,62 @@ linux_install_nvidia_cuda() {
     ohai "CUDA (Toolkit + Drivers) installation complete"
 }
 
-################################################################################
-# UFW (DEFAULT PORT RANGE)
-################################################################################
-linux_install_ufw() {
-    sudo apt-get update
-    sudo apt-get install -y ufw
-    sudo ufw allow 22/tcp
-    sudo ufw allow 4444
+############################################
+# Manual mode: request port range
+############################################
+linux_configure_ufw() {
+    sudo apt-get update && sudo apt-get install -y ufw
+    
+    if [[ "$AUTOMATED" == "true" ]]; then
+        local default_range="2000-5000"
+        ohai "AUTOMATED mode: enabling UFW for port range $default_range"
+        sudo ufw allow "${default_range}/tcp"
+        sudo ufw enable
+        ohai "UFW configured automatically for port range $default_range"
 
-    ohai "Enabling UFW and allowing ports 2000-5000"
-    sudo ufw allow 2000:5000/tcp
-    sudo ufw enable
+    else
+        echo "Please enter the port range for UFW (e.g., 2000-5000):"
+        read -p "Enter port range (start-end): " port_range
+
+        # Verificar formato "start-end"
+        if [[ "$port_range" =~ ^[0-9]+-[0-9]+$ ]]; then
+            start_port=$(echo "$port_range" | cut -d'-' -f1)
+            end_port=$(echo "$port_range" | cut -d'-' -f2)
+
+            if [[ $start_port -lt $end_port ]]; then
+                ohai "Enabling UFW for port range $start_port-$end_port"
+                sudo ufw allow "${start_port}:${end_port}/tcp"
+                sudo ufw enable
+                ohai "UFW configured successfully with port range $port_range"
+            else
+                echo "Invalid port range. The start port should be less than the end port."
+                exit 1
+            fi
+        else
+            echo "Invalid port range format. Please use the format: start-end (e.g., 2000-5000)"
+            exit 1
+        fi
+    fi
 }
 
 ################################################################################
-# ULIMIT (ALWAYS INCREASE)
+# ULIMIT (CONFIGURABLE)
 ################################################################################
 linux_increase_ulimit(){
-    ohai "Increasing ulimit to 1,000,000"
-    prlimit --pid=$PPID --nofile=1000000
+    if [[ "$AUTOMATED" == "true" ]]; then
+        ohai "AUTOMATED mode: Increasing ulimit to 1,000,000"
+        prlimit --pid=$$ --nofile=1000000
+    else
+        ohai "Current open-files limit (ulimit -n) is: $(ulimit -n)"
+        read -rp "Increase ulimit to 1,000,000? [y/N]: " do_ulimit
+        do_ulimit="${do_ulimit,,}"
+        if [[ "$do_ulimit" == "y" || "$do_ulimit" == "yes" ]]; then
+            ohai "Raising ulimit to 1,000,000..."
+            prlimit --pid=$$ --nofile=1000000
+        else
+            ohai "Leaving ulimit as is."
+        fi
+    fi
 }
 
 ################################################################################
@@ -250,7 +298,28 @@ if [[ "$OS" == "Linux" ]]; then
                                                                                                                                                              
                                                    - Bittensor; Mining a new element.
     """
-    ohai "Starting auto-install..."
+    if [[ "$AUTOMATED" == "true" ]]; then
+        ohai "Running in automated mode. Skipping interactive messages."
+    else
+        ohai "This script will install:"
+        echo "git"
+        echo "curl"
+        echo "cmake"
+        echo "build-essential"
+        echo "python3"
+        echo "python3-pip"
+        echo "subtensor"
+        echo "bittensor"
+        echo "docker"
+        echo "nvidia docker support"
+        echo "pm2"
+        echo "compute-subnet"
+        echo "hashcat"
+        echo "nvidia drivers and cuda toolkit"
+        echo "ufw"
+
+        wait_for_user
+    fi
     linux_install_pre
 
     # Step 1: Install python, pip

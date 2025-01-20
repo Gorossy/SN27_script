@@ -31,7 +31,7 @@ runcmd:
   - echo "Downloading and executing the SN27_installer.sh script from GitHub..."
   - curl -sL https://raw.githubusercontent.com/Gorossy/SN27_script/main/SN27_installer.sh -o /tmp/SN27_installer.sh
   - chmod +x /tmp/SN27_installer.sh
-  - /tmp/SN27_installer.sh
+  - /tmp/SN27_installer.sh --automated
 """
 
     payload = {
