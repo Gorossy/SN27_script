@@ -6,12 +6,6 @@ Este proyecto contiene un **script de instalación** que, al ejecutarse, se enca
 * **Instalar** Docker, NVIDIA drivers (si no detecta CUDA), PM2, Bittensor, y otras dependencias necesarias.
 * **Configurar** Python, entornos virtuales, y librerías de OpenCL.
 
-## Requisitos Previos
-* Python 3.10 y python3.10-venv instalados en el sistema
-* Acceso root o permisos de sudo
-* Conexión a internet estable
-* Clave WANDB generada desde wandb.ai
-
 ## Pasos para la Instalación
 
 1. **Ejecuta el script de instalación**
