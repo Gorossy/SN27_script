@@ -25,7 +25,6 @@ Este proyecto contiene un **script de instalación** que, al ejecutarse, se enca
    ```
    * Edita el archivo `.env` para configurar:
      - WANDB_KEY (requerida para el funcionamiento)
-     - Otras variables de entorno necesarias
 
 3. **Creación de Wallet Bittensor**
    ```bash
