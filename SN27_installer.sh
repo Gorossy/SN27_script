@@ -85,7 +85,7 @@ getc() {
 wait_for_user() {
   local c
   echo
-  echo "Press RETURN to continue or any other key to abort"
+  echo "Press ENTER to continue or any other key to abort"
   getc c
   # we test for \r and \n because some stuff does \r instead
   if ! [[ "$c" == $'\r' || "$c" == $'\n' ]]; then
