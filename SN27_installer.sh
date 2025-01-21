@@ -74,6 +74,14 @@ inject_wandb_env() {
   ohai "Done configuring .env"
 }
 
+getc() {
+  local save_state
+  save_state=$(/bin/stty -g)
+  /bin/stty raw -echo
+  IFS= read -r -n 1 -d '' "$@"
+  /bin/stty "$save_state"
+}
+
 wait_for_user() {
   local c
   echo
