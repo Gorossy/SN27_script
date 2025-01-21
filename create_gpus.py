@@ -13,6 +13,8 @@ IMAGE_NAME = os.getenv("IMAGE_NAME")
 FLAVOR_NAME = os.getenv("FLAVOR_NAME")
 COUNT = int(os.getenv("COUNT", "1"))
 
+WANDB_KEY = os.getenv("WANDB_KEY", "")
+
 HEADERS = {
     "api_key": API_KEY,
     "Content-Type": "application/json"
@@ -22,16 +24,17 @@ HEADERS = {
 def create_virtual_machines(environment_name, key_name):
     print("Creating virtual machines...")
 
-    user_data_script = """#cloud-config
+    user_data_script = f"""#cloud-config
 packages:
   - htop
 
 runcmd:
-  - echo "Hello from Cloud-Init!"
-  - echo "Downloading and executing the SN27_installer.sh script from GitHub..."
-  - curl -sL https://raw.githubusercontent.com/Gorossy/SN27_script/main/SN27_installer.sh -o /tmp/SN27_installer.sh
-  - chmod +x /tmp/SN27_installer.sh
-  - /tmp/SN27_installer.sh --automated
+  - |
+    echo "Hello from Cloud-Init!"
+    curl -sL https://raw.githubusercontent.com/Gorossy/SN27_script/main/SN27_installer.sh -o /tmp/SN27_installer.sh
+    chmod +x /tmp/SN27_installer.sh
+    export WANDB_KEY="{WANDB_KEY}"
+    /tmp/SN27_installer.sh --automated
 """
 
     payload = {
@@ -135,7 +138,7 @@ def main():
     try:
         # 1. Create VMs
         vm_ids = create_virtual_machines(ENVIRONMENT_NAME, KEY_NAME)
-        if not vm_ids:
+        if len(vm_ids) == 0:
             print("No VM was created. Exiting...")
             return
 
@@ -175,11 +178,12 @@ def main():
             for vm_id in vm_ids:
                 open_ssh_port(vm_id)
         else:
-            print("Not all VMs reached ACTIVE state. Skipping SSH port opening.")
+            print("Not all VMs reached ACTIVE state. Aborting and cleaning up.")
+            return 
 
         # 4. Wait 1 hour before cleanup
         print("Waiting 1 hour (approx) before cleanup...")
-        time.sleep(3200)
+        time.sleep(3600)
 
     except KeyboardInterrupt:
         print("\nKeyboard interrupt detected. Cleaning up any created VMs...")

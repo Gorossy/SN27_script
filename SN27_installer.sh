@@ -37,6 +37,43 @@ if [[ "${1:-}" == "--automated" ]]; then
   AUTOMATED="true"
 fi
 
+WANDB_ENV="${WANDB_KEY:-}"
+
+ask_user_for_wandb_key() {
+  read -rp "Enter WANDB_API_KEY (leave blank if none): " WANDB_ENV
+}
+
+##########################################
+# Insert WANDB_API_KEY into .env
+##########################################
+inject_wandb_env() {
+  local env_example="/home/ubuntu/Compute-Subnet/.env.example"
+  local env_path="/home/ubuntu/Compute-Subnet/.env"
+
+  # Mensaje
+  ohai "Configuring .env for Compute-Subnet..."
+
+  # 1. Si no existe .env pero sí .env.example, copiamos
+  if [[ ! -f "$env_path" ]] && [[ -f "$env_example" ]]; then
+    ohai "Copying .env.example to .env"
+    sudo -u ubuntu cp "$env_example" "$env_path"
+  fi
+
+  # 2. Reemplazar WANDB_API_KEY dentro de .env (asumiendo que la línea WANDB_API_KEY= existe en .env.example)
+  if [[ -n "$WANDB_ENV" ]]; then
+    ohai "Updating WANDB_API_KEY in .env"
+    # Usamos sed para buscar la línea que comience con WANDB_API_KEY= y la reemplazamos
+    # El /g final se omite porque solo hay una línea
+    sudo -u ubuntu sed -i "s|^WANDB_API_KEY=.*|WANDB_API_KEY=\"$WANDB_ENV\"|" "$env_path"
+  else
+    ohai "No WANDB_API_KEY provided. Skipping replacement in .env."
+  fi
+
+  # 3. Ajustar ownership
+  sudo chown ubuntu:ubuntu "$env_path"
+  ohai "Done configuring .env"
+}
+
 ################################################################################
 # PRE-INSTALL
 ################################################################################
@@ -346,6 +383,13 @@ if [[ "$OS" == "Linux" ]]; then
 
     # ulimit
     linux_increase_ulimit
+    # Solicitar WANDB key sólo en modo manual
+    if [[ "$AUTOMATED" == "false" ]]; then
+      ohai "Enter your wandb api key..."
+      ask_user_for_wandb_key
+    fi
+
+    inject_wandb_env
 
     echo ""
     echo ""
