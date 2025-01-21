@@ -40,7 +40,7 @@ runcmd:
         "flavor_name": FLAVOR_NAME,
         "key_name": key_name,
         "assign_floating_ip": True,
-        "count": 1,
+        "count": COUNT,
         "user_data": user_data_script
     }
 
