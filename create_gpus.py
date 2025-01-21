@@ -9,10 +9,9 @@ BASE_URL = os.getenv("BASE_URL")
 API_KEY = os.getenv("API_KEY")
 ENVIRONMENT_NAME = os.getenv("ENVIRONMENT_NAME")
 KEY_NAME = os.getenv("KEY_NAME")
-
-# Agregados:
 IMAGE_NAME = os.getenv("IMAGE_NAME")
 FLAVOR_NAME = os.getenv("FLAVOR_NAME")
+COUNT = os.getenv("COUNT")
 
 HEADERS = {
     "api_key": API_KEY,
@@ -129,7 +128,7 @@ def main():
 
     try:
         vm_ids = create_virtual_machines(ENVIRONMENT_NAME, KEY_NAME)
-        if not vm_ids:
+        if len(vm_ids) == 0:
             print("No VM was created. Exiting...")
             return
 
