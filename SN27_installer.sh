@@ -127,9 +127,13 @@ linux_setup_venv() {
     sudo -u ubuntu -H /home/ubuntu/venv/bin/pip install --upgrade pip
     exit_on_error $? "venv-pip-upgrade"
 
-    # Option: Automatically activate the venv in ~/.bashrc
-    echo "source /home/ubuntu/venv/bin/activate" | sudo tee -a /home/ubuntu/.bashrc
-    sudo chown ubuntu:ubuntu /home/ubuntu/.bashrc
+    if [[ "$AUTOMATED" == "true" ]]; then
+        ohai "Adding 'source /home/ubuntu/venv/bin/activate' to ~/.bashrc (automated mode)"
+        echo "source /home/ubuntu/venv/bin/activate" | sudo tee -a /home/ubuntu/.bashrc
+        sudo chown ubuntu:ubuntu /home/ubuntu/.bashrc
+    else
+        ohai "Skipping automatic venv activation in ~/.bashrc (manual mode)"
+    fi
 }
 
 ################################################################################
@@ -225,46 +229,70 @@ linux_install_nvidia_docker() {
     ohai "NVIDIA Docker installed"
 }
 
+detect_ubuntu_version() {
+  source /etc/os-release 2>/dev/null || {
+    echo "Cannot detect /etc/os-release. Not an Ubuntu-based system?"
+    return 1
+  }
+
+  if [[ "$ID" == "ubuntu" && "$VERSION_ID" == "22.04" ]]; then
+    echo "ubuntu-22.04"
+  else
+    echo "unsupported"
+  fi
+}
+
 ################################################################################
 # CUDA INSTALLATION (NO removal of existing drivers)
 ################################################################################
 linux_install_nvidia_cuda() {
-    ohai "Checking if CUDA is already installed"
-    # Check if 'nvcc' or 'nvidia-smi' already exists; if so, assume it's already configured
-    if command -v nvidia-smi >/dev/null 2>&1 || command -v nvcc >/dev/null 2>&1; then
-        ohai "CUDA/NVIDIA drivers found; skipping re-installation."
-        return
-    fi
+  local distro=$(detect_ubuntu_version)
+  
+  if [[ "$distro" == "unsupported" ]]; then
+    ohai "Detected a distro/version that this script does not support for CUDA. Please install manually following NVIDIA docs."
+    return 0
+  fi
 
-    ohai "CUDA/NVIDIA drivers not found. Proceeding with a fresh installation."
 
-    ohai "Installing build essentials"
-    sudo apt-get install -y build-essential dkms linux-headers-$(uname -r)
+  if command -v nvidia-smi >/dev/null 2>&1 || command -v nvcc >/dev/null 2>&1; then
+      ohai "CUDA/NVIDIA drivers found; skipping re-installation."
+      return
+  fi
 
-    ohai "Installing CUDA"
-    wget https://developer.download.nvidia.com/compute/cuda/12.3.1/local_installers/cuda-repo-ubuntu2204-12-3-local_12.3.1-545.23.08-1_amd64.deb \
-      -O /tmp/cuda-repo.deb
-    sudo dpkg -i /tmp/cuda-repo.deb
-    sudo cp /var/cuda-repo-ubuntu2204-12-3-local/cuda-*-keyring.gpg /usr/share/keyrings/
-    sudo apt-get update
-    sudo apt-get -y install cuda-toolkit-12-3
-    sudo apt-get -y install cuda-drivers
+  ohai "CUDA/NVIDIA drivers not found. Installing for Ubuntu 22.04..."
 
-    ohai "Configuring environment variables"
-    export CUDA_VERSION="cuda-12.3"
-    {
-      echo ""
-      echo "# Added by NVIDIA CUDA install script"
-      echo "export CUDA_VERSION=${CUDA_VERSION}"
-      echo "export PATH=\$PATH:/usr/local/\$CUDA_VERSION/bin"
-      echo "export LD_LIBRARY_PATH=\$LD_LIBRARY_PATH:/usr/local/\$CUDA_VERSION/lib64"
-    } >> /home/ubuntu/.bashrc
+  # STEPS pinned approach Ubuntu 22.04
+  # 1. build-essential ...
+  sudo apt-get update
+  sudo apt-get install -y build-essential dkms linux-headers-$(uname -r)
 
-    # Adjust permissions and load in the current session
-    sudo chown ubuntu:ubuntu /home/ubuntu/.bashrc
-    source /home/ubuntu/.bashrc
+  # 2. pinned file
+  wget https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2204/x86_64/cuda-ubuntu2204.pin
+  sudo mv cuda-ubuntu2204.pin /etc/apt/preferences.d/cuda-repository-pin-600
 
-    ohai "CUDA (Toolkit + Drivers) installation complete"
+  # 3. local .deb
+  wget https://developer.download.nvidia.com/compute/cuda/12.6.3/local_installers/cuda-repo-ubuntu2204-12-6-local_12.6.3-560.35.05-1_amd64.deb \
+       -O /tmp/cuda-repo.deb
+  sudo dpkg -i /tmp/cuda-repo.deb
+  sudo cp /var/cuda-repo-ubuntu2204-12-6-local/cuda-*-keyring.gpg /usr/share/keyrings/
+  sudo apt-get update
+
+  # 4. Install toolkit
+  sudo apt-get -y install cuda-toolkit-12-6
+
+  # 5. Environment variables
+  ohai "Configuring environment variables for CUDA 12.6"
+  {
+    echo ""
+    echo "# Added by NVIDIA CUDA install script"
+    echo "export PATH=/usr/local/cuda-12.6/bin:\$PATH"
+    echo "export LD_LIBRARY_PATH=/usr/local/cuda-12.6/lib64:\$LD_LIBRARY_PATH"
+  } | sudo tee -a /home/ubuntu/.bashrc
+
+  sudo chown ubuntu:ubuntu /home/ubuntu/.bashrc
+  source /home/ubuntu/.bashrc
+
+  ohai "CUDA 12.6 installed successfully on Ubuntu 22.04!"
 }
 
 ############################################
