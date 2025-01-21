@@ -11,12 +11,13 @@ ENVIRONMENT_NAME = os.getenv("ENVIRONMENT_NAME")
 KEY_NAME = os.getenv("KEY_NAME")
 IMAGE_NAME = os.getenv("IMAGE_NAME")
 FLAVOR_NAME = os.getenv("FLAVOR_NAME")
-COUNT = os.getenv("COUNT")
+COUNT = int(os.getenv("COUNT", "1"))
 
 HEADERS = {
     "api_key": API_KEY,
     "Content-Type": "application/json"
 }
+
 
 def create_virtual_machines(environment_name, key_name):
     print("Creating virtual machines...")
@@ -56,8 +57,9 @@ runcmd:
         return vm_ids
 
     except requests.exceptions.RequestException as e:
-        print(f"Request failed: {e}")
+        print(f"Request failed while creating VMs: {e}")
         raise
+
 
 def check_vm_status(vm_ids):
     print("Checking status of VMs...")
@@ -90,6 +92,7 @@ def check_vm_status(vm_ids):
         print(f"Failed to check VM statuses: {e}")
         raise
 
+
 def open_ssh_port(vm_id):
     """
     Opens port 22 (SSH) on the specified VM through the security rule.
@@ -114,6 +117,7 @@ def open_ssh_port(vm_id):
     except requests.exceptions.RequestException as e:
         print(f"Failed to open SSH port on VM {vm_id}: {e}")
 
+
 def delete_virtual_machine(vm_id):
     print(f"Deleting virtual machine {vm_id}...")
     try:
@@ -123,29 +127,41 @@ def delete_virtual_machine(vm_id):
     except requests.exceptions.RequestException as e:
         print(f"Failed to delete VM {vm_id}: {e}")
 
+
 def main():
     vm_ids = []
+    ready = False
 
     try:
+        # 1. Create VMs
         vm_ids = create_virtual_machines(ENVIRONMENT_NAME, KEY_NAME)
-        if len(vm_ids) == 0:
+        if not vm_ids:
             print("No VM was created. Exiting...")
             return
 
+        # 2. Check status (until timeout)
         timeout = 600  # 10 minutes
         interval = 30  # 30 seconds
         start_time = time.time()
 
-        # Wait until all VMs are ACTIVE
         while True:
-            vm_statuses = check_vm_status(vm_ids)
+            try:
+                vm_statuses = check_vm_status(vm_ids)
+            except requests.exceptions.RequestException as e:
+                print("Error while checking VM statuses. Breaking out.")
+                break
+
+            # Check if all VMs are "ACTIVE"
             all_ready = all(
-                vm_statuses[vm_id]["status"] == "ACTIVE" for vm_id in vm_ids
+                vm_statuses.get(vm_id, {}).get("status") == "ACTIVE"
+                for vm_id in vm_ids
             )
             if all_ready:
                 print("All VMs are ready.")
+                ready = True
                 break
 
+            # Timeout
             if time.time() - start_time > timeout:
                 print("Timeout reached while waiting for VMs to be ready.")
                 break
@@ -153,10 +169,15 @@ def main():
             print("Waiting 30 seconds before rechecking...")
             time.sleep(interval)
 
-        print("Opening SSH port (22) on each VM...")
-        for vm_id in vm_ids:
-            open_ssh_port(vm_id)
+        # 3. Only open SSH ports if ALL VMs are ACTIVE
+        if ready:
+            print("Opening SSH port (22) on each VM...")
+            for vm_id in vm_ids:
+                open_ssh_port(vm_id)
+        else:
+            print("Not all VMs reached ACTIVE state. Skipping SSH port opening.")
 
+        # 4. Wait 1 hour before cleanup
         print("Waiting 1 hour (approx) before cleanup...")
         time.sleep(3200)
 
@@ -168,6 +189,7 @@ def main():
             for vm_id in vm_ids:
                 delete_virtual_machine(vm_id)
             print("Cleanup finished. Exiting.")
+
 
 if __name__ == "__main__":
     main()
