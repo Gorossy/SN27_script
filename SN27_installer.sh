@@ -74,6 +74,17 @@ inject_wandb_env() {
   ohai "Done configuring .env"
 }
 
+wait_for_user() {
+  local c
+  echo
+  echo "Press RETURN to continue or any other key to abort"
+  getc c
+  # we test for \r and \n because some stuff does \r instead
+  if ! [[ "$c" == $'\r' || "$c" == $'\n' ]]; then
+    exit 1
+  fi
+}
+
 ################################################################################
 # PRE-INSTALL
 ################################################################################
