@@ -3,7 +3,7 @@
 ## Description
 This project contains an **installation script** that, when executed, takes care of:
 * **Cloning** the Compute-Subnet repository automatically.
-* **Installing** Docker, NVIDIA drivers (if CUDA is not detected), PM2, Bittensor, and other necessary dependencies.
+* **Installing** Docker, NVIDIA drivers if not detected, PM2, Bittensor, and other necessary dependencies.
 * **Configuring** Python, virtual environments, and OpenCL libraries.
 
 ## Installation Steps
@@ -15,7 +15,7 @@ This project contains an **installation script** that, when executed, takes care
      - Increase of `ulimit`
    * The following will be installed automatically:
      - Docker
-     - CUDA (if not present)
+     - NVIDIA drivers
      - Other necessary tools
 
 2. **WANDB Configuration**
