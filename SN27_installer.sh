@@ -501,7 +501,8 @@ if [[ "$OS" == "Linux" ]]; then
     fi
 
     inject_wandb_env
-
+    regen_bittensor_wallet
+    
     echo ""
     echo ""
     echo ""
