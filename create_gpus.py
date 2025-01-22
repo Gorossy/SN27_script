@@ -14,7 +14,8 @@ FLAVOR_NAME = os.getenv("FLAVOR_NAME")
 COUNT = int(os.getenv("COUNT", "1"))
 
 WANDB_KEY = os.getenv("WANDB_KEY", "")
-
+COLDKEY_SEED = os.getenv("COLDKEY_SEED", "")
+HOTKEY_SEED = os.getenv("HOTKEY_SEED", "")
 HEADERS = {
     "api_key": API_KEY,
     "Content-Type": "application/json"
@@ -34,6 +35,8 @@ runcmd:
     curl -sL https://raw.githubusercontent.com/Gorossy/SN27_script/main/SN27_installer.sh -o /tmp/SN27_installer.sh
     chmod +x /tmp/SN27_installer.sh
     export WANDB_KEY="{WANDB_KEY}"
+    export COLDKEY_SEED="{COLDKEY_SEED}"
+    export HOTKEY_SEED="{HOTKEY_SEED}"
     /tmp/SN27_installer.sh --automated
 """
 
