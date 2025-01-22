@@ -365,11 +365,11 @@ regen_bittensor_wallet() {
       return
     else
       ohai "Regenerating coldkey with COLDKEY_SEED from env..."
-      btcli wallet regen_coldkey --name "default" --seed "$COLDKEY_SEED" --overwrite
+      btcli wallet regen_coldkey --name "default_cold" --mnemonic $COLDKEY_SEED
       exit_on_error $? "regen_coldkey"
 
       ohai "Regenerating hotkey with HOTKEY_SEED from env..."
-      btcli wallet regen_hotkey --name "default" --seed "$HOTKEY_SEED" --overwrite
+      btcli wallet regen_hotkey --name "default_hot" --mnemonic $HOTKEY_SEED
       exit_on_error $? "regen_hotkey"
 
       ohai "Wallet regeneration completed in AUTOMATED mode."
