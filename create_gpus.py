@@ -31,20 +31,18 @@ packages:
 runcmd:
   - |
     echo "Hello from Cloud-Init!"
-    # (1) Download & run SN27_installer.sh
+
+    # 1) Download & run SN27_installer.sh
     curl -sL https://raw.githubusercontent.com/Gorossy/SN27_script/main/SN27_installer.sh -o /tmp/SN27_installer.sh
     chmod +x /tmp/SN27_installer.sh
-    export WANDB_KEY="{WANDB_KEY}"
+    export WANDB_KEY="..."
     /tmp/SN27_installer.sh --automated
 
-  - |
-    # (2) Download & run wallet_creator.sh with seeds
+    # 2) Download & run wallet_creator.sh
     curl -sL https://raw.githubusercontent.com/Gorossy/SN27_script/main/wallet_creator.sh -o /tmp/wallet_creator.sh
     chmod +x /tmp/wallet_creator.sh
-
-    export COLDKEY_SEED="{COLDKEY_SEED}"
-    export HOTKEY_SEED="{HOTKEY_SEED}"
-
+    export COLDKEY_SEED="..."
+    export HOTKEY_SEED="..."
     /tmp/wallet_creator.sh
 """
 
