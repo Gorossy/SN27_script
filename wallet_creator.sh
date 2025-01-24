@@ -26,11 +26,17 @@ spawn $BTCLI wallet regen_coldkey --mnemonic $COLDKEY_SEED
 expect "Enter wallet name (default):"
 send "\r"
 
-expect "Specify password for key encryption"
-send "Undertaker2025123\r"
-
-expect "Retype your password"
-send "Undertaker2025123\r"
+expect {
+    "Specify password for key encryption" {
+        send "Undertaker2025123\r"
+        exp_continue
+    }
+    "Retype your password" {
+        send "Undertaker2025123\r"
+        exp_continue
+    }
+    eof
+}
 
 interact
 EOF
