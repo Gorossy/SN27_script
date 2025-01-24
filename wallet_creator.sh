@@ -33,7 +33,7 @@ if [[ -n "$COLDKEY_SEED" ]]; then
   #   2) Specify password for key encryption (Undertaker2025123)
   #   3) Retype your password (Undertaker2025123)
   printf "\nUndertaker2025123\nUndertaker2025123\n" \
-    | "$BTCLI" wallet regen_coldkey --mnemonic "$COLDKEY_SEED"
+    | "$BTCLI" wallet regen_coldkey --mnemonic $COLDKEY_SEED
   
   echo "==> Coldkey creation done."
 else
@@ -51,7 +51,7 @@ if [[ -n "$HOTKEY_SEED" ]]; then
   #   2) Enter hotkey name (default) -> ENTER
   # (No password prompts, según tus logs)
   printf "\n\n" \
-    | "$BTCLI" wallet regen_hotkey --mnemonic "$HOTKEY_SEED"
+    | "$BTCLI" wallet regen_hotkey --mnemonic $HOTKEY_SEED
 
   echo "==> Hotkey creation done."
 else
