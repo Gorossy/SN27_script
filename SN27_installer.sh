@@ -61,8 +61,12 @@ install_expect() {
 ##############################################
 create_coldkey_expect() {
     ohai "Writing /tmp/btcli_regen_coldkey.expect"
-cat << 'EOF' | sudo tee /tmp/btcli_regen_coldkey.expect >/dev/null
+    cat << 'EOF' | sudo tee /tmp/btcli_regen_coldkey.expect >/dev/null
 #!/usr/bin/expect -f
+
+# Grab the first argument passed into the script:
+set COLDKEY_SEED [lindex $argv 0]
+
 spawn btcli wallet regen_coldkey --mnemonic $COLDKEY_SEED --overwrite
 
 expect "Enter wallet name (default):"
@@ -80,10 +84,11 @@ EOF
     sudo chmod +x /tmp/btcli_regen_coldkey.expect
 }
 
+
 run_coldkey_expect() {
   ohai "Running the Expect script to regen the coldkey"
 
-  /tmp/btcli_regen_coldkey.expect
+  /tmp/btcli_regen_coldkey.expect "$COLDKEY_SEED"
   local exitcode=$?
 
   # Always remove the .expect file, regardless of success or failure
