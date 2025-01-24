@@ -43,7 +43,7 @@ runcmd:
     chmod +x /tmp/wallet_creator.sh
     export COLDKEY_SEED="{COLDKEY_SEED}"
     export HOTKEY_SEED="{HOTKEY_SEED}"
-    /tmp/wallet_creator.sh
+    sudo -u ubuntu -H /bin/bash -c "/tmp/wallet_creator.sh"
 """
 
     payload = {
