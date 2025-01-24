@@ -67,7 +67,7 @@ create_coldkey_expect() {
 # Grab the first argument passed into the script:
 set COLDKEY_SEED [lindex $argv 0]
 
-spawn bash -c "source /home/ubuntu/venv/bin/activate && btcli wallet regen_coldkey --mnemonic $MYSEED --overwrite"
+spawn bash -c "source /home/ubuntu/venv/bin/activate && btcli wallet regen_coldkey --mnemonic $COLDKEY_SEED --overwrite"
 
 expect "Enter wallet name (default):"
 send  "\r"
