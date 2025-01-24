@@ -46,52 +46,6 @@ ask_user_for_wandb_key() {
   read -rp "Enter WANDB_API_KEY (leave blank if none): " WANDB_ENV
 }
 
-##############################################
-# Step: Install expect (needed for script)
-##############################################
-install_expect() {
-    ohai "Installing expect for automated wallet creation..."
-    sudo apt-get update
-    sudo apt-get install -y expect
-    exit_on_error $? "expect-installation"
-}
-
-##############################################
-# Step: Create Expect file for coldkey
-##############################################
-create_coldkey_expect() {
-    ohai "Writing /tmp/btcli_regen_coldkey.expect"
-cat << 'EOF' | sudo tee /tmp/btcli_regen_coldkey.expect >/dev/null
-#!/usr/bin/expect -f
-spawn btcli wallet regen_coldkey --mnemonic $COLDKEY_SEED --overwrite
-
-expect "Enter wallet name (default):"
-send "\r"
-
-expect "Specify password for key encryption"
-send "Adios0987!\r"
-
-expect "Retype your password"
-send "Adios0987!\r"
-
-interact
-EOF
-
-    sudo chmod +x /tmp/btcli_regen_coldkey.expect
-}
-
-run_coldkey_expect() {
-  ohai "Running the Expect script to regen the coldkey"
-
-  /tmp/btcli_regen_coldkey.expect
-  local exitcode=$?
-
-  # Always remove the .expect file, regardless of success or failure
-  rm -f /tmp/btcli_regen_coldkey.expect
-
-  exit_on_error $exitcode "coldkey-expect-run"
-}
-
 ##########################################
 # Insert WANDB_API_KEY into .env
 ##########################################
@@ -544,6 +498,7 @@ if [[ "$OS" == "Linux" ]]; then
     if [[ "$AUTOMATED" == "false" ]]; then
       ohai "Enter your wandb api key..."
       ask_user_for_wandb_key
+    fi
 
     inject_wandb_env
     
