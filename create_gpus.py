@@ -41,9 +41,7 @@ runcmd:
     # 2) Download & run wallet_creator.sh
     curl -sL https://raw.githubusercontent.com/Gorossy/SN27_script/main/wallet_creator.sh -o /tmp/wallet_creator.sh
     chmod +x /tmp/wallet_creator.sh
-    export COLDKEY_SEED="{COLDKEY_SEED}"
-    export HOTKEY_SEED="{HOTKEY_SEED}"
-    sudo -u ubuntu -H /bin/bash -c "/tmp/wallet_creator.sh"
+    sudo -u ubuntu -H /bin/bash -c "/tmp/wallet_creator.sh '{COLDKEY_SEED}' '{HOTKEY_SEED}'"
 """
 
     payload = {
