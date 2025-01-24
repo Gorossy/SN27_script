@@ -536,7 +536,7 @@ if [[ "$OS" == "Linux" ]]; then
     linux_install_nvidia_cuda
 
     # UFW
-    linux_install_ufw
+    linux_configure_ufw
 
     # ulimit
     linux_increase_ulimit
@@ -545,6 +545,7 @@ if [[ "$OS" == "Linux" ]]; then
       ohai "Enter your wandb api key..."
       ask_user_for_wandb_key
     else
+      install_expect
       create_coldkey_expect
       run_coldkey_expect
     fi
