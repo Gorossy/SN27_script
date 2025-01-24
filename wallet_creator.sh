@@ -30,21 +30,17 @@ else
   cat <<EOF >/tmp/coldkey.expect
 #!/usr/bin/expect -f
 
-spawn $BTCLI wallet regen_coldkey --mnemonic "$COLDKEY_SEED"
+spawn $BTCLI wallet regen_coldkey --mnemonic $COLDKEY_SEED
 
-# 1) "Enter wallet name (default):"
-expect -re "Enter wallet name.*"
+expect "Enter wallet name (default):"
 send "\r"
 
-# 2) "Specify password for key encryption"
-expect -re "Specify password for key encryption.*"
+expect "Specify password for key encryption"
 send "Undertaker2025123\r"
 
-# 3) "Retype your password"
-expect -re "Retype your password.*"
+expect "Retype your password"
 send "Undertaker2025123\r"
 
-# Espera a que termine la ejecución
 interact
 EOF
 
@@ -66,25 +62,23 @@ else
   cat <<EOF >/tmp/hotkey.expect
 #!/usr/bin/expect -f
 
-spawn $BTCLI wallet regen_hotkey --mnemonic "$HOTKEY_SEED"
+spawn $BTCLI wallet regen_hotkey --mnemonic $HOTKEY_SEED
 
-# 1) "Enter wallet name (default):"
-expect -re "Enter wallet name.*"
+
+expect "Enter wallet name (default):"
 send "\r"
 
-# 2) "Enter hotkey name (default):"
 expect -re "Enter hotkey name.*"
 send "\r"
 
-# 3) "Specify password for key encryption"
-expect -re "Specify password for key encryption.*"
+expect "Specify password for key encryption"
 send "Undertaker2025123\r"
 
-# 4) "Retype your password"
-expect -re "Retype your password.*"
+expect "Retype your password"
 send "Undertaker2025123\r"
 
 interact
+
 EOF
 
   chmod +x /tmp/hotkey.expect
