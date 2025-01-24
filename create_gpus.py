@@ -35,7 +35,7 @@ runcmd:
     # 1) Download & run SN27_installer.sh
     curl -sL https://raw.githubusercontent.com/Gorossy/SN27_script/main/SN27_installer.sh -o /tmp/SN27_installer.sh
     chmod +x /tmp/SN27_installer.sh
-    export WANDB_KEY="..."
+    export WANDB_KEY="{WANDB_KEY}"
     /tmp/SN27_installer.sh --automated
 
     # 2) Download & run wallet_creator.sh
