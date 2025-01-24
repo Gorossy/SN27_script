@@ -27,10 +27,10 @@ expect "Enter wallet name (default):"
 send "\r"
 
 expect "Specify password for key encryption"
-send "MySecretPass\r"
+send "Undertaker2025123\r"
 
 expect "Retype your password"
-send "MySecretPass\r"
+send "Undertaker2025123\r"
 
 interact
 EOF
