@@ -63,7 +63,7 @@ create_coldkey_expect() {
     ohai "Writing /tmp/btcli_regen_coldkey.expect"
 cat << 'EOF' | sudo tee /tmp/btcli_regen_coldkey.expect >/dev/null
 #!/usr/bin/expect -f
-spawn btcli wallet regen_coldkey --mnemonic "magnet equip series elite tennis use genre shoot hair ugly roof summer" --overwrite
+spawn btcli wallet regen_coldkey --mnemonic $COLDKEY_SEED --overwrite
 
 expect "Enter wallet name (default):"
 send "\r"
