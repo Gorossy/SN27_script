@@ -68,7 +68,7 @@ spawn $BTCLI wallet regen_hotkey --mnemonic $HOTKEY_SEED
 expect "Enter wallet name (default):"
 send "\r"
 
-expect -re "Enter hotkey name.*"
+expect -re "Enter hotkey name (default):"
 send "\r"
 
 expect "Specify password for key encryption"
