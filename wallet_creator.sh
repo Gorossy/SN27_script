@@ -1,91 +1,61 @@
 #!/bin/bash
 set -euo pipefail
 
-# --------------------------------------------------------------------------
-# Usage: wallet_creator.sh <coldkey_seed> <hotkey_seed>
-# Ejemplo de llamada:
-#     ./wallet_creator.sh "mi coldkey seed ..." "mi hotkey seed ..."
+# --------------------------------------------------------------
+# Uso:
+#   ./wallet_creator.sh <COLDKEY_SEED> <HOTKEY_SEED>
 #
-# Este script crea automáticamente coldkey y hotkey usando `btcli` + `expect`.
-# --------------------------------------------------------------------------
+# Ejemplo de llamada:
+#   ./wallet_creator.sh "seed coldkey..." "seed hotkey..."
+#
+# Requisitos:
+#   - Bittensor instalado en /home/ubuntu/venv/bin/btcli
+#   - NO se usa "expect". Simplemente se envían las líneas
+#     necesarias para contestar los prompts de "btcli".
+# --------------------------------------------------------------
 
-# Toma los argumentos (o en blanco si no se han pasado)
 COLDKEY_SEED="${1:-}"
 HOTKEY_SEED="${2:-}"
 
-# Ruta absoluta a btcli dentro del entorno virtual
+# Ajusta esta ruta si tu venv o btcli está en otro lugar
 BTCLI="/home/ubuntu/venv/bin/btcli"
 
-echo "==> Installing expect (para manejar prompts automáticamente)"
-sudo apt-get update -y
-sudo apt-get install -y expect
+echo "==> Starting wallet creation..."
 
-##############################################
-# Coldkey
-##############################################
-if [[ -z "$COLDKEY_SEED" ]]; then
-  echo "No COLDKEY_SEED provided; skipping coldkey creation."
+############################################################
+# COLDKEY (con password)
+############################################################
+if [[ -n "$COLDKEY_SEED" ]]; then
+  echo "==> Creating coldkey with seed: $COLDKEY_SEED"
+  
+  # Orden que btcli pide en "regen_coldkey":
+  #   1) Enter wallet name (ENTER)
+  #   2) Specify password for key encryption (Undertaker2025123)
+  #   3) Retype your password (Undertaker2025123)
+  printf "\nUndertaker2025123\nUndertaker2025123\n" \
+    | "$BTCLI" wallet regen_coldkey --mnemonic "$COLDKEY_SEED"
+  
+  echo "==> Coldkey creation done."
 else
-  echo "==> Creando /tmp/coldkey.expect..."
-  cat <<EOF >/tmp/coldkey.expect
-#!/usr/bin/expect -f
-
-spawn $BTCLI wallet regen_coldkey --mnemonic $COLDKEY_SEED
-
-expect "Enter wallet name (default):"
-send "\r"
-
-expect "Specify password for key encryption"
-send "Undertaker2025123\r"
-
-expect "Retype your password"
-send "Undertaker2025123\r"
-
-interact
-EOF
-
-  chmod +x /tmp/coldkey.expect
-
-  echo "==> Ejecutando coldkey.expect..."
-  /tmp/coldkey.expect || echo "==> Error: Falló la creación de coldkey"
-  rm -f /tmp/coldkey.expect
+  echo "==> No COLDKEY_SEED provided; skipping coldkey creation."
 fi
 
+############################################################
+# HOTKEY (sin password)
+############################################################
+if [[ -n "$HOTKEY_SEED" ]]; then
+  echo "==> Creating hotkey with seed: $HOTKEY_SEED"
 
-##############################################
-# Hotkey
-##############################################
-if [[ -z "$HOTKEY_SEED" ]]; then
-  echo "No HOTKEY_SEED provided; skipping hotkey creation."
+  # Orden que btcli pide en "regen_hotkey":
+  #   1) Enter wallet name (default) -> ENTER
+  #   2) Enter hotkey name (default) -> ENTER
+  # (No password prompts, según tus logs)
+  printf "\n\n" \
+    | "$BTCLI" wallet regen_hotkey --mnemonic "$HOTKEY_SEED"
+
+  echo "==> Hotkey creation done."
 else
-  echo "==> Creando /tmp/hotkey.expect..."
-  cat <<EOF >/tmp/hotkey.expect
-#!/usr/bin/expect -f
-
-spawn $BTCLI wallet regen_hotkey --mnemonic $HOTKEY_SEED
-
-
-expect "Enter wallet name (default):"
-send "\r"
-
-expect -re "Enter hotkey name (default):"
-send "\r"
-
-expect "Specify password for key encryption"
-send "Undertaker2025123\r"
-
-expect "Retype your password"
-send "Undertaker2025123\r"
-
-interact
-
-EOF
-
-  chmod +x /tmp/hotkey.expect
-
-  echo "==> Ejecutando hotkey.expect..."
-  /tmp/hotkey.expect || echo "==> Error: Falló la creación de hotkey"
-  rm -f /tmp/hotkey.expect
+  echo "==> No HOTKEY_SEED provided; skipping hotkey creation."
 fi
 
-echo "==> wallet_creator.sh done"
+echo "==> wallet_creator.sh finished."
