@@ -21,7 +21,7 @@ else
   cat <<EOF >/tmp/coldkey.expect
 #!/usr/bin/expect -f
 
-spawn $BTCLI wallet regen_coldkey --mnemonic $COLDKEY_SEED --overwrite
+spawn $BTCLI wallet regen_coldkey --mnemonic $COLDKEY_SEED
 
 expect "Enter wallet name (default):"
 send "\r"
@@ -41,35 +41,3 @@ EOF
   /tmp/coldkey.expect || echo "Failed to create coldkey"
   rm -f /tmp/coldkey.expect
 fi
-
-
-# 3) Same approach for HOTKEY_SEED if you want a separate key:
-if [[ -z "$HOTKEY_SEED" ]]; then
-  echo "No HOTKEY_SEED provided; skipping hotkey creation."
-else
-  echo "Creating /tmp/hotkey.expect"
-  cat <<EOF >/tmp/hotkey.expect
-#!/usr/bin/expect -f
-
-spawn $BTCLI wallet regen_hotkey --mnemonic $HOTKEY_SEED --overwrite
-
-expect "Enter wallet name (default):"
-send "\r"
-
-expect "Specify password for key encryption"
-send "MySecretPass\r"
-
-expect "Retype your password"
-send "MySecretPass\r"
-
-interact
-EOF
-
-  chmod +x /tmp/hotkey.expect
-
-  echo "==> Running hotkey.expect"
-  /tmp/hotkey.expect || echo "Failed to create hotkey"
-  rm -f /tmp/hotkey.expect
-fi
-
-echo "==> wallet_creator.sh done"
