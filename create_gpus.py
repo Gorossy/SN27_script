@@ -28,21 +28,24 @@ def create_virtual_machines(environment_name, key_name):
     user_data_script = f"""#cloud-config
 packages:
   - htop
-
 runcmd:
   - |
     echo "Hello from Cloud-Init!"
-    # 1) Fetch & run SN27_installer.sh to set up everything
+    # (1) Download & run SN27_installer.sh
     curl -sL https://raw.githubusercontent.com/Gorossy/SN27_script/main/SN27_installer.sh -o /tmp/SN27_installer.sh
     chmod +x /tmp/SN27_installer.sh
     export WANDB_KEY="{WANDB_KEY}"
     /tmp/SN27_installer.sh --automated
-    |
-    # 2) Now fetch & run wallet_creator.sh which uses Expect for btcli
+
+  - |
+    # (2) Download & run wallet_creator.sh with seeds
     curl -sL https://raw.githubusercontent.com/Gorossy/SN27_script/main/wallet_creator.sh -o /tmp/wallet_creator.sh
     chmod +x /tmp/wallet_creator.sh
+
     export COLDKEY_SEED="{COLDKEY_SEED}"
     export HOTKEY_SEED="{HOTKEY_SEED}"
+
+    /tmp/wallet_creator.sh
 """
 
     payload = {
